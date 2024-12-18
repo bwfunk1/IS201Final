@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Invaders</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: row;
+    }
+
+    nav {
+      width: 200px;
+      padding: 20px;
+      background: #222;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin: 10px 0;
+      font-size: 18px;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    .instructions {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #ccc;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .instructions span {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .arrow-icon {
+      font-size: 20px;
+    }
+
+    #game-container {
+      position: relative;
+      width: 800px;
+      height: 600px;
+      border: 2px solid #fff;
+      background: #000;
+      overflow: hidden;
+      margin-left: 220px;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="../index.html">Home</a>
+    <a href="scratch.html">Scratch Page</a>
+    <a href="../contact.html">Contact</a>
+
+    <!-- Instructions below the nav links -->
+    <div class="instructions">
+      <span><span class="arrow-icon">&#8593;</span> Arrow keys to move</span>
+      <span><span class="arrow-icon">&#8595;</span> Arrow keys to move</span>
+      <span><span class="arrow-icon">&#8592;</span> Arrow keys to move</span>
+      <span><span class="arrow-icon">&#8594;</span> Arrow keys to move</span>
+      <span><span class="spacebar-icon">&#32;</span> Space bar to shoot</span>
+    </div>
+  </nav>
+
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <script>
+    const container = document.getElementById('game-container');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = container.offsetWidth;
+    canvas.height = container.offsetHeight;
+
+    const player = { x: canvas.width / 2, y: canvas.height / 2, size: 20, speed: 30, bullets: [] };
+    const enemies = [];
+    let score = 0;
+    let gameRunning = true;
+
+    function drawPlayer() {
+      ctx.fillStyle = 'lime';
+      ctx.fillRect(player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+    }
+
+    function drawBullets() {
+      ctx.fillStyle = 'yellow';
+      player.bullets.forEach((bullet, index) => {
+        bullet.y -= 10;
+        ctx.fillRect(bullet.x - 5, bullet.y - 10, 10, 20);
+        if (bullet.y < 0) player.bullets.splice(index, 1);
+      });
+    }
+
+    function spawnEnemy() {
+      const size = Math.random() * 20 + 20;
+      enemies.push({
+        x: Math.random() * canvas.width,
+        y: -size,
+        size: size,
+        speed: Math.random() * 2 + 1,
+      });
+    }
+
+    function drawEnemies() {
+      ctx.fillStyle = 'red';
+      enemies.forEach((enemy, index) => {
+        enemy.y += enemy.speed;
+        ctx.fillRect(enemy.x - enemy.size / 2, enemy.y - enemy.size / 2, enemy.size, enemy.size);
+
+        if (
+          enemy.x < player.x + player.size &&
+          enemy.x + enemy.size > player.x &&
+          enemy.y < player.y + player.size &&
+          enemy.y + enemy.size > player.y
+        ) {
+          gameRunning = false;
+          alert(`Game Over! Your score: ${score}`);
+          window.location.reload();
+        }
+
+        player.bullets.forEach((bullet, bulletIndex) => {
+          if (
+            bullet.x < enemy.x + enemy.size &&
+            bullet.x + 10 > enemy.x &&
+            bullet.y < enemy.y + enemy.size &&
+            bullet.y + 20 > enemy.y
+          ) {
+            score++;
+            enemies.splice(index, 1);
+            player.bullets.splice(bulletIndex, 1);
+          }
+        });
+
+        if (enemy.y > canvas.height) enemies.splice(index, 1);
+      });
+    }
+
+    function drawScore() {
+      ctx.fillStyle = 'white';
+      ctx.font = '20px Arial';
+      ctx.fillText(`Score: ${score}`, 20, 30);
+    }
+
+    function update() {
+      if (!gameRunning) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPlayer();
+      drawBullets();
+      drawEnemies();
+      drawScore();
+      requestAnimationFrame(update);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' && player.y > 0) player.y -= player.speed;
+      if (e.key === 'ArrowDown' && player.y < canvas.height) player.y += player.speed;
+      if (e.key === 'ArrowLeft' && player.x > 0) player.x -= player.speed;
+      if (e.key === 'ArrowRight' && player.x < canvas.width) player.x += player.speed;
+      if (e.key === ' ') {
+        player.bullets.push({ x: player.x, y: player.y });
+      }
+    });
+
+    setInterval(spawnEnemy, 1000);
+    update();
+  </script>
+</body>
+</html>
